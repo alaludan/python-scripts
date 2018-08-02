@@ -26,6 +26,7 @@ all_port_id_list = []
 user_id_list = []
 stack_id_list = []
 secgroup_id_list = []
+dhcp_agent_id_list = []
 router_id_list = []
 project_name = ""
 project_id = ""
@@ -137,16 +138,14 @@ class project:
         for all_port_id in all_port_ids:
             all_port_id = str(all_port_id).strip()
             all_port_id_list.append(all_port_id)
-        return all_port_id_list
-
-    def show_port(self):
+           
         for subnet_id in subnet_id_list:
-            port_info = os.popen("neutron port-list -f value -c id -c fixed_ips|grep %s" % (subnet_id))
-            port_ids = port_info.readlines()
-            for port_id in port_ids:
-                port_id = str(port_id).split(" ")[0]
-                port_id_list.append(port_id)
-        return port_id_list
+            subnet_port_info = os.popen("neutron port-list|grep %s|awk -F'|' '{print $2}'" % (subnet_id))
+            subnet_port_ids = subnet_port_info.readlines()
+            for subnet_port_id in subnet_port_ids:
+                subnet_port_id = str(subnet_port_id).strip()
+                all_port_id_list.append(subnet_port_id) 
+        return all_port_id_list
 
     def show_net(self,project_id):
         print "\n"
@@ -159,6 +158,18 @@ class project:
             net_id = str(net_id).strip()
             net_id_list.append(net_id)
         return net_id_list
+
+    def show_dhcp_agent(self,project_id):
+        print "\n"
+        print "=>Show All DHCP_AGENT of %s..." % (project_id)
+        os.system("neutron agent-list|grep DHCP")
+        print "\n"
+        dhcp_agent_info = os.popen("neutron agent-list|grep dhcp|awk -F '|' '{print $2}'")
+        dhcp_agent_ids = dhcp_agent_info.readlines()
+        for dhcp_agent_id in dhcp_agent_ids:
+            dhcp_agent_id = str(dhcp_agent_id).strip()
+            dhcp_agent_id_list.append(dhcp_agent_id)
+        return dhcp_agent_id_list
 
     def show_router(self,project_id):
         print "\n"
@@ -264,6 +275,13 @@ class project:
                 time.sleep(2)
             os.system("neutron router-delete %s" % (router_id))
             print "Delete router:%s" % (router_id)
+
+    def remove_dhcp_agent(self):
+        print "\n"
+        for dhcp_agent_id in dhcp_agent_id_list:
+            for net_id in net_id_list:
+                os.system("neutron dhcp-agent-network-remove %s %s" % (dhcp_agent_id,net_id))
+                time.sleep(2)
 
     def del_port(self,project_id):
         print "\n"
@@ -520,6 +538,7 @@ def main():
             P.show_subnet(project_id)
             P.show_all_port(project_id)
             P.show_net(project_id)
+            P.show_dhcp_agent(project_id)
             P.show_router(project_id)
             P.show_secgroup(project_id)
             P.show_stack(project_id)
@@ -529,6 +548,7 @@ def main():
             P.del_vm(project_id)
             P.del_image(project_id)
             P.del_router(project_id)
+            P.remove_dhcp_agent()
             P.del_port(project_id)
             P.del_subnet(project_id)
             P.del_net(project_id)
