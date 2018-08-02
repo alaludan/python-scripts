@@ -62,12 +62,17 @@ class project:
         if project_dic.has_key(project_id):
             project_id = project_dic[project_id]
             os.system("openstack project set --disable %s" % (project_id))
+            title = "Disable Project"
+            content = project_id + " " + "disable succeessful"
             print "\n"
-            print "****************************************Disable Project****************************************"
-            print "*                                                                                             *"
-            print "*                             %s disable succeessful                                  *" % (project_id)
-            print "*                                                                                             *"
-            print "***********************************************************************************************"
+            print title.center(100,'*')
+            print "*" + " "*98 + "*"
+            print "*" + " "*98 + "*"
+            print content.center(100,"*")
+            print "*" + " "*98 + "*"
+            print "*" + " "*98 + "*"
+            print "*"*100
+            print "\n"
         else:
             print "%s does not exist" % (project_id)
             sys.exit(10)
