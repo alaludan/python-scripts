@@ -1,78 +1,61 @@
 #!/usr/bin/python
 import os
-import time
 import sys
+import time
 
-del_failed_stack_list = []
-del_failed_resource_list = []
-del_failed_sub_resource_list = []
-del_failed_volume_list = []
+failed_resource_id_list = []
+sub_failed_resource_id_list = []
+volume_id_list = []
 
-def get_stack_id():
-    stack_info = os.popen("heat stack-list -g|grep DELETE_FAILED|awk -F'|' '{print $2}'")
-    stack_ids = stack_info.readlines()
-    for stack_id in stack_ids:
-        stack_id = stack_id.strip()
-        del_failed_stack_list.append(stack_id)
-    return del_failed_stack_list
-
-def get_resource_id():
-    for stack_id in del_failed_stack_list:
-        resource_info = os.popen("heat resource-list %s|grep DELETE_FAILED|awk -F'|' '{print $3}'" % (stack_id))
-        resource_ids = resource_info.readlines()
-        for resource_id in resource_ids:
-            resource_id = resource_id.strip()
-            del_failed_resource_list.append(resource_id)
-    print "del_failed_resource_list:%s" % (del_failed_resource_list)
-    return del_failed_resource_list
-
-def get_resource_id_from_stack():
-    stack_id = str(sys.argv[1])
-    resource_info = os.popen("heat resource-list %s|grep DELETE_FAILED|awk -F'|' '{print $3}'" % (stack_id))
-    resource_ids = resource_info.readlines()
-    for resource_id in resource_ids:
-        resource_id = resource_id.strip()
-        del_failed_resource_list.append(resource_id)
-    print "del_failed_resource_list:%s" % (del_failed_resource_list)
-    return del_failed_resource_list
-     
+def get_failed_resource_id():
     
-def get_sub_resource_id():
-    for sub_resource_id in del_failed_resource_list:
-        sub_resource_info = os.popen("heat resource-list %s|grep DELETE_FAILED|awk -F'|' '{print $3}'" % (sub_resource_id))
-        sub_resource_ids = sub_resource_info.readlines()
-        for sub_resource_id in sub_resource_ids:
-            sub_resource_id = sub_resource_id.strip()
-            del_failed_sub_resource_list.append(sub_resource_id)
-    print "del_failed_sub_resource_list:%s" % (del_failed_sub_resource_list)
-    return del_failed_sub_resource_list
+    stack_id = str(sys.argv[1])
+    failed_resource_info = os.popen("openstack stack resource list %s -f value -c physical_resource_id -c resource_type -c resource_status|grep -v COMP|awk -F' ' '{print $1}'" % (stack_id))
+    failed_resource_ids = failed_resource_info.readlines()
+	
+    for failed_resource_id in failed_resource_ids:
+	failed_resource_id = str(failed_resource_id).strip()
+	failed_resource_id_list.append(failed_resource_id)
+        print "failed_resource_id:%s" % (failed_resource_id)
+    return failed_resource_id_list
 
+def get_sub_resource_id():
+
+    for sub_resource_id in failed_resource_id_list:
+        sub_failed_resource_info = os.popen("openstack stack resource list %s -f value -c physical_resource_id" % (sub_resource_id))
+        sub_failed_resource_ids = sub_failed_resource_info.readlines()
+        
+        for sub_failed_resource_id in sub_failed_resource_ids:
+            sub_failed_resource_id = str(sub_failed_resource_id).strip()
+            sub_failed_resource_id_list.append(sub_failed_resource_id)
+            print "sub_failed_resource_id:%s" % (sub_failed_resource_id)
+    return sub_failed_resource_id_list
+            
+	 
 def get_volume_id():
-    for sub_resource_id in del_failed_sub_resource_list:
-        volume_id_info = os.popen("heat resource-list %s|grep OS::Cinder::Volume|grep DELETE|awk -F'|' '{print $3}'" % (sub_resource_id))
+
+    for sub_failed_id in sub_failed_resource_id_list:
+	volume_id_info = os.popen("openstack stack resource list %s -f value -c physical_resource_id -c resource_type -c resource_status|grep -v COMP|awk -F' ' '{print $1}'" % (sub_failed_id))
         volume_ids = volume_id_info.readlines()
+		
         for volume_id in volume_ids:
-            volume_id = volume_id.strip()
-            del_failed_volume_list.append(volume_id)
-    print "del_failed_volume_list:%s" % (del_failed_volume_list)
-    return del_failed_volume_list
+	    volume_id = str(volume_id).strip()
+            volume_id_list.append(volume_id)
+            print "volume_id:%s" % (volume_id)
+    return volume_id_list
 
 def del_volume():
-    for volume_id in del_failed_volume_list:
+    for volume_id in volume_id_list:
         os.system("cinder reset-state --state available --attach-status detached %s" % (volume_id))
         time.sleep(0.5)
         os.system("cinder delete %s" % (volume_id))
 
-def del_stack():
-    for stack_id in del_failed_stack_list:
-        os.system("heat stack-delete %s -y" % (stack_id))        
-
 def main():
-    get_resource_id_from_stack()        
-    get_sub_resource_id()       
-    get_volume_id() 
+    get_failed_resource_id()
+    get_sub_resource_id()
+    get_volume_id()
     del_volume()
-
+   
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print "\n"
@@ -82,3 +65,4 @@ if __name__ == '__main__':
         print "\n"
     else:
         main()
+
