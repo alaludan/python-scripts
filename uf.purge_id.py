@@ -1,14 +1,13 @@
 #!/usr/bin/python
+#-*-coding:utf-8-*-
 
-
-#####################################################################################
-#This tool will automatically clear the specified project all the volume, vm, image #
-#, network, net, stack, and then delete the user, the final need to manually delete #
-# the project!                                                                      #
-#                                                                                   #
-#                                              -----Developer by Yupeng Luo         #
-#                                              -----Mail:yupeng.luo@nokia-sbell.com #
-#####################################################################################
+# This tool will automatically clear the specified project all the volume, vm,
+# image,network, net, stack, and then delete the user, the final need to 
+# manually delete the project!                                                                      
+#                                                                                   
+#                                              -----Developer by Yupeng Luo       
+#                                              -----Mail:yupeng.luo@nokia-sbell.com 
+#
 
 
 import os
@@ -49,6 +48,7 @@ def usage():
 class project:
 
     def get(self):
+        # retrun a dictionary that containing project information
         info = os.popen("openstack project list -f value")
         project_info = info.readlines()
         for project in project_info:
@@ -59,6 +59,7 @@ class project:
         return project_dic
 
     def disable(self,project_id):
+        # disable project
         if project_dic.has_key(project_id):
             project_id = project_dic[project_id]
             os.system("openstack project set --disable %s" % (project_id))
@@ -78,6 +79,7 @@ class project:
             sys.exit(10)
 
     def show_user(self,project_id):
+        # return an user_id list of project 
         print "\n"
         print "=>Show All Users of %s..." % (project_id)
         os.system("openstack user list --project %s|grep -v -w admin" % (project_id))
@@ -89,6 +91,7 @@ class project:
         return user_id_list
 
     def show_vol(self,project_id):
+        # return a volume_id list of project
         print "\n"
         print "=>Show All Volumes Of %s..." % (project_id)
         os.system("cinder list --tenant %s" % (project_id))
@@ -101,6 +104,7 @@ class project:
         return vol_id_list
         
     def show_vm(self,project_id):
+        # return a instance_id list of project
         print "\n"
         print "=>Show All VM Of %s..." % (project_id)
         os.system("openstack server list --project %s" % (project_id))
@@ -113,6 +117,7 @@ class project:
         return vm_id_list
 
     def show_image(self,project_id):
+        # return a image_id list of project
         print "\n"
         print "=>Show All Images Of %s..." % (project_id)
         os.system("glance image-list --owner %s" % (project_id))
@@ -125,6 +130,7 @@ class project:
         return image_id_list
 
     def show_subnet(self,project_id):
+        # return a subnet_id list of project
         print "\n"
         print "=>Show All Subnets Of %s..." % (project_id)
         print "\n"
@@ -138,6 +144,7 @@ class project:
         return subnet_id_list
 
     def show_all_port(self,project_id):
+        # return a port_id list of project
         all_port_info = os.popen("neutron port-list -f value -c id -c security_groups -c tenant_id |grep %s|awk -F' ' '{print $1}'" % (project_id))
         all_port_ids = all_port_info.readlines()
         for all_port_id in all_port_ids:
@@ -153,6 +160,7 @@ class project:
         return all_port_id_list
 
     def show_net(self,project_id):
+        # return a network_id list of project
         print "\n"
         print "=>Show All Networks Of %s..." % (project_id)
         os.system("neutron net-list --tenant-id %s" % (project_id))
@@ -165,6 +173,7 @@ class project:
         return net_id_list
 
     def show_dhcp_agent(self,project_id):
+        # return a dhcp_agent_id list of project
         print "\n"
         print "=>Show All DHCP_AGENT of %s..." % (project_id)
         os.system("neutron agent-list|grep DHCP")
@@ -177,6 +186,7 @@ class project:
         return dhcp_agent_id_list
 
     def show_router(self,project_id):
+        # return a route_id list of project
         print "\n"
         print "=>Show All Routers Of %s..." % (project_id)
         os.system("openstack router list|grep %s" % (project_id))
@@ -189,6 +199,7 @@ class project:
         return router_id_list
             
     def show_secgroup(self,project_id):
+        # return a security group id list of project
         print "\n"
         print "=>Show All Secgroups Of %s..." % (project_id)
         os.system("nova secgroup-list --all-tenants|grep %s" % (project_id))
@@ -201,6 +212,7 @@ class project:
         return secgroup_id_list 
 
     def show_stack(self,project_id):
+        # return a stack_id list of project
         print "\n"
         print "=>Show All Stacks Of %s..." % (project_id)
         print "\n"
@@ -214,6 +226,7 @@ class project:
         return stack_id_list
 
     def reset_vol_status(self,project_id):
+        # reset volume status to "available" and attach-status to "detached"
         print "\n"
         print "=>Reset Volume..."
         print "\n"
@@ -225,6 +238,7 @@ class project:
         print "\n"
 
     def shutdown_vm(self,project_id):
+        # shutdown all instances
         print "\n"
         print "=>Shutdown All VMs of %s..." % (project_id)
         print "\n"
@@ -236,6 +250,7 @@ class project:
         print "\n"
         
     def del_vol(self,project_id):
+        # delete all volumes
         print "\n"
         print "=>Delete All Volumes of %s..." % (project_id)
         print "\n"
@@ -247,6 +262,7 @@ class project:
         print "\n"
 
     def del_vm(self,project_id):
+        # delete all instances
         print "\n"
         print "=>Delete All VMs of %s..." % (project_id)
         print "\n"
@@ -258,6 +274,7 @@ class project:
         print "\n"
 
     def del_image(self,project_id):
+        # delete all images 
         print "\n"
         print "=>Delete All Images Of %s..." % (project_id)
         print "\n"
@@ -270,6 +287,7 @@ class project:
         print "\n"
 
     def del_router(self,project_id):
+        # delete all routers
         print "\n"
         print "=>Delete All routers of %s" % (project_id)
         for router_id in router_id_list:
@@ -282,6 +300,7 @@ class project:
             print "Delete router:%s" % (router_id)
 
     def remove_dhcp_agent(self):
+        # remove all dhcp_agent from network
         print "\n"
         for dhcp_agent_id in dhcp_agent_id_list:
             for net_id in net_id_list:
@@ -289,6 +308,7 @@ class project:
                 time.sleep(2)
 
     def del_port(self,project_id):
+        # delete all ports
         print "\n"
         print "=>Delete All ports of %s" % (project_id)
         for port_id in all_port_id_list:
@@ -296,6 +316,7 @@ class project:
             time.sleep(2)
 
     def del_subnet(self,project_id):
+        # delete all subnets
         print "\n"
         print "=>Delete All subnets of %s" % (project_id)
 
@@ -305,6 +326,7 @@ class project:
             print "Delete subnet:%s" % (subnet_id)
 
     def del_net(self,project_id):
+        # delete all networks
         print "\n"
         print "=>Delete All Networks Of %s..." % (project_id)
         print "\n"
@@ -316,6 +338,7 @@ class project:
         print "\n"
 
     def del_secgroup(self,project_id):
+        # delete all security groups
         print "\n"
         print "=>Delete All Secgroups Of %s..." % (project_id)
         print "\n"
@@ -327,6 +350,7 @@ class project:
         print "\n"
 
     def del_user(self,project_id):
+        # delete all users
         print "\n"
         print "=>Delete All Users of %s..." % (project_id)
         print "\n"
@@ -338,6 +362,7 @@ class project:
         print "\n"
 
     def del_stack(self,project_id):
+        # delete all stacks
         print "\n"
         print "=>Delete All Stacks of %s..." % (project_id)
         print "\n"
@@ -351,7 +376,7 @@ class project:
 class check:
 
     def vol(self,project_id):
-
+        # check if all volumes of project were deleted
         after_del_vol_id_list = []
         after_del_vol_info =  os.popen("cinder list --tenant %s|awk -F'|' '{print $2}'|awk 'NR>2'|awk NF" % (project_id))
         after_del_vol_ids = after_del_vol_info.readlines()
@@ -370,7 +395,7 @@ class check:
                 return False
 
     def vm(self,project_id):
-                
+        # check if all instances of project were deleted        
         after_del_vm_id_list = []
         after_del_info =  os.popen("cinder list --tenant %s|awk -F'|' '{print $2}'|awk 'NR>2'|awk NF" % (project_id))
         after_del_vm_ids = after_del_info.readlines()
@@ -389,7 +414,7 @@ class check:
                 return False
 
     def subnet(self,project_id):
-
+        # check if all subnets of project were deleted
         after_del_subnet_id_list = []
         after_del_subnet_info = os.popen("openstack subnet list --long -f value -c ID -c Project|grep %s" % (project_id))
         after_del_subnet_ids = after_del_subnet_info.readlines()
@@ -408,7 +433,7 @@ class check:
                 return False
 
     def secgroup(self,project_id):
-
+        # check if all security groups of project were deleted
         after_del_secgroup_id_list = []
         after_del_secgroup_info = os.popen("nova secgroup-list --all-tenants|grep %s|awk -F'|' '{print $2}'" % (project_id))
         after_del_secgroup_ids = after_del_secgroup_info.readlines()
@@ -427,7 +452,7 @@ class check:
                 return False
     
     def router(self,project_id):
-
+        # check if all routers of project were deleted
         after_del_router_id_list = []     
         after_del_router_info = os.popen("openstack router list|grep %s|awk -F'|' '{print $2}'" % (project_id))
         after_del_router_ids = after_del_router_info.readlines()
@@ -446,7 +471,7 @@ class check:
                 return False
 
     def net(self,project_id):
-
+        # check if all networks of project were deleted
         after_del_net_id_list = []
         after_del_net_info = os.popen("neutron net-list --tenant-id %s -f value -c id" % (project_id))
         after_del_net_ids = after_del_net_info.readlines()
@@ -464,7 +489,7 @@ class check:
                 return False
 
     def port(self,project_id):
-
+        # check if all ports of project were deleted
         after_del_port_id_list = []
         for subnet_id in subnet_id_list:
             after_del_port_info = os.popen("neutron port-list -f value -c id -c security_groups -c tenant_id |grep %s|awk -F' ' '{print $1}'" % (subnet_id))
@@ -484,7 +509,7 @@ class check:
                 return False
 
     def image(self,project_id):
-
+        # check if all images of project were deleted
         after_del_image_id_list = []
         after_del_image_info = os.popen("glance image-list --owner %s|awk -F'|' '{print $2}'|awk 'NR>2'|awk NF" % (project_id))
         after_del_image_ids = after_del_image_info.readlines()
@@ -503,7 +528,7 @@ class check:
                 return False
 
     def stack(self,project_id):
-
+        # check if all stacks of project were deleted
         after_del_stack_id_list = []
         after_del_stack_info = os.popen('openstack stack list --all-project -f value -c ID -c "Stack Name" -c Project|grep %s' % (project_id))
         after_del_stack_ids = after_del_stack_info.readlines()
@@ -523,7 +548,7 @@ class check:
 
 
 def main():
-
+    
     P = project()
     P.get()
     

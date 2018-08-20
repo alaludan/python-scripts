@@ -11,9 +11,7 @@ nova_client = Client(creds['version'],creds['username'],creds['password'],creds[
 
 instances = nova_client.servers.list(detailed=True)
 
-securityg = nova_client.servers.list_security_group(instances[0])
-
-instance_name = str(instances[0]).split(":")[1].strip(">").strip()
+print type(instances)
 
 print "\n"
 
@@ -36,4 +34,3 @@ for ser in instances:
     print addresses[addresses_key][0]['addr']
     print "."*60
     print "\n"
-
