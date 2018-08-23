@@ -14,6 +14,7 @@
 import os
 import sys
 import time
+import logging
 
 project_dic = {}
 vol_id_list = []
@@ -32,6 +33,10 @@ project_name = ""
 project_id = ""
 
 check_vm = check_vol = check_subnet = check_net = check_port = check_image = check_stack = check_secgroup = check_router = True 
+
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+logging.basicConfig(filename='uf.purge.log',level=logging.DEBUG,format=LOG_FORMAT,datefmt=DATE_FORMAT)
 
 def usage():
     print """
@@ -63,7 +68,7 @@ class project:
             project_id = project_dic[project_id]
             os.system("openstack project set --disable %s" % (project_id))
             title = "Disable Project"
-            content = project_id + " " + "disable succeessful"
+            content = project_id + " " + "disable successful"
             print "\n"
             print title.center(100,'*')
             print "*" + " "*98 + "*"
@@ -73,8 +78,10 @@ class project:
             print "*" + " "*98 + "*"
             print "*"*100
             print "\n"
+            logging.info(content)
         else:
-            print "%s does not exist" % (project_id)
+            loginfo = "%s does not exist" % (project_id)
+            logging.error(loginfo)
             sys.exit(10)
 
     def show_user(self,project_id):
@@ -220,6 +227,8 @@ class project:
         for vol_id in vol_id_list:
             os.system("cinder reset-state --state available --attach-status detached %s" % (vol_id))
             print "Reset status for VM:%s" % (vol_id)
+            loginfo = "%s reset successful..." % (vol_id)
+            logging.info(loginfo)
             time.sleep(2)
         print "\n"
         print "\n"
@@ -231,6 +240,8 @@ class project:
         for vm in vm_id_list:
             os.system("openstack server stop %s" % (vm))
             print "Stop VM:%s" % (vm)
+            loginfo = "Stop vm %s successful..." % (vm)
+            logging.info(loginfo)
             time.sleep(10)
         print "\n"
         print "\n"
@@ -242,6 +253,8 @@ class project:
         for vol_id in vol_id_list:
             os.system("openstack volume delete %s" % (vol_id))
             print "Delete Volume:%s" % (vol_id)
+            loginfo = "Delete volume %s successful..." % (vol_id)
+            logging.info(loginfo)
             time.sleep(10)
         print "\n"
         print "\n"
@@ -253,6 +266,8 @@ class project:
         for vm in vm_id_list:
             os.system("openstack server delete %s" % (vm))
             print "Delete VM:%s" % (vm)
+            loginfo = "Delete VM %s successful..." % (vm)
+            logging.info(loginfo)
             time.sleep(10)
         print "\n"
         print "\n"
@@ -265,6 +280,8 @@ class project:
             os.system("glance image-update --is-protected False %s" % (image))
             os.system("glance image-delete %s" % (image))
             print "Delete image:%s" % (image)
+            loginfo = "Delete image %s successful..." % (image)
+            logging.info(loginfo)
             time.sleep(2)
         print "\n"
         print "\n"
@@ -280,6 +297,8 @@ class project:
                 time.sleep(2)
             os.system("neutron router-delete %s" % (router_id))
             print "Delete router:%s" % (router_id)
+            loginfo = "Delete router %s successful..." % (router_id)
+            logging.info(loginfo)
 
     def remove_dhcp_agent(self):
         print "\n"
@@ -293,6 +312,8 @@ class project:
         print "=>Delete All ports of %s" % (project_id)
         for port_id in all_port_id_list:
             os.system("neutron port-delete %s" % (port_id))
+            loginfo = "Delete port %s successful..." % (port_id)
+            logging.info(loginfo)
             time.sleep(2)
 
     def del_subnet(self,project_id):
@@ -303,6 +324,8 @@ class project:
             os.system("openstack subnet delete %s" % (subnet_id))
             time.sleep(2)
             print "Delete subnet:%s" % (subnet_id)
+            loginfo = "Delete subnet %s successful..." % (subnet_id)
+            logging.info(loginfo)
 
     def del_net(self,project_id):
         print "\n"
@@ -311,6 +334,8 @@ class project:
         for net_id in net_id_list:
             os.system("openstack network delete %s" %(net_id))
             print "Delete network:%s" % (net_id)
+            loginfo = "Delete network %s successful..." % (net_id)
+            logging.info(loginfo)
             time.sleep(2)
         print "\n"
         print "\n"
@@ -322,6 +347,8 @@ class project:
         for secgroup_id in secgroup_id_list:
             os.system("nova secgroup-delete %s" %(secgroup_id))
             print "Delete secgroup:%s" % (secgroup_id)
+            loginfo = "Delete security group %s successful..." % (secgroup_id)
+            logging.info(loginfo)
             time.sleep(2)
         print "\n"
         print "\n"
@@ -333,6 +360,8 @@ class project:
         for user_id in user_id_list:
             os.system("openstack user delete %s" % (user_id))
             print "Delete user:%s" % (user_id)
+            loginfo = "Delete user %s successful..." % (user_id)
+            logging.info(loginfo)
             time.sleep(2)
         print "\n"
         print "\n"
@@ -344,6 +373,8 @@ class project:
         for stack_id in stack_id_list:
             os.system("openstack stack delete %s --yes" % (stack_id))
             print "Delete Stack:%s" % (stack_id)
+            loginfo = "Delete stack %s successful..." % (stack_id)
+            logging.info(loginfo)
             time.sleep(40)
         print "\n"
         print "\n"
@@ -360,13 +391,17 @@ class check:
             after_del_vol_id_list.append(after_del_vol_id)
 
         if len(after_del_vol_id_list) == 0:
-            print "Volume Clean up"
+            print "All Volumes Clean up..."
             print "\n"
+            loginfo = "All Volumes Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_vol_id in after_del_vol_id_list:
                 print "Volume:%s does not delete,Please check!" % (after_del_vol_id)
                 print "\n"
+                loginfo = "Volume:%s does not delete..." % (after_del_vol_id)
+                logging.error(loginfo)
                 return False
 
     def vm(self,project_id):
@@ -379,13 +414,17 @@ class check:
             after_del_vm_id_list.append(after_del_vm_id)
 
         if len(after_del_vm_id_list) == 0:
-            print "VM Clean up"
+            print "All VMs Clean up..."
             print "\n"
+            loginfo = "All VMs Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_vm_id in after_del_vm_id_list:
                 print "VM:%s does not delete,Please check!" % (after_del_vm_id)
                 print "\n"
+                loginfo = "VM:%s does not delete..." % (after_del_vm_id)
+                logging.error(loginfo)
                 return False
 
     def subnet(self,project_id):
@@ -398,13 +437,17 @@ class check:
             after_del_subnet_id_list.append(after_del_subnet_id)
 
         if len(after_del_subnet_id_list) == 0:
-            print "Subnet Clean up"
+            print "All Subnets Clean up..."
             print "\n"
+            loginfo = "All Subnets Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_subnet_id in after_del_subnet_id_list:
                 print "Subnet:%s does not delete,Please check!" % (after_del_subnet_id)
                 print "\n"
+                loginfo = "Subnet:%s does not delete..." % (after_del_subnet_id)
+                logging.error(loginfo)
                 return False
 
     def secgroup(self,project_id):
@@ -417,13 +460,17 @@ class check:
             after_del_secgroup_id_list.append(after_del_secgroup_id)
 
         if len(after_del_secgroup_id_list) == 0:
-            print "Secgroup Clean up"
+            print "All Secgroups Clean up..."
             print "\n"
+            loginfo = "All Secgroups Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_secgroup_id in after_del_secgroup_id_list:
                 print "Secgroup:%s does not delete,Please check!" % (after_del_secgroup_id)
                 print "\n"
+                loginfo = "Security group:%s does not delete..." % (after_del_secgroup_id)
+                logging.error(loginfo)
                 return False
     
     def router(self,project_id):
@@ -436,13 +483,17 @@ class check:
             after_del_router_id_list.append(after_del_router_id)
 
         if len(after_del_router_id_list) == 0:
-            print "Routers Clean up"
+            print "All Routers Clean up..."
             print "\n"
+            loginfo = "All Routers Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_router_id in after_del_router_id_list:
                 print "Routers:%s does not delete,Please check!" % (after_del_router_id)
                 print "\n"
+                loginfo = "Routers:%s does not delete..." % (after_del_router_id)
+                logging.error(loginfo)
                 return False
 
     def net(self,project_id):
@@ -454,13 +505,17 @@ class check:
             after_del_net_id = str(after_del_net_id).strip()
             after_del_net_id_list.append(after_del_net_id)
         if len(after_del_net_id_list) == 0:
-            print "Network Clean up"
+            print "All Networks Clean up..."
             print "\n"
+            loginfo = "All Networks Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_net_id in after_del_net_id_list:
                 print "Network:%s does not delete,Please check!" % (after_del_net_id)
                 print "\n"
+                loginfo = "Network:%s does not delete..." % (after_del_net_id)
+                logging.error(loginfo)
                 return False
 
     def port(self,project_id):
@@ -474,13 +529,17 @@ class check:
                 after_del_port_id_list.append(after_def_port_id)
 
         if len(after_del_port_id_list) == 0:
-            print "Port Clean up"
+            print "All Ports Clean up..."
             print "\n"
+            loginfo = "All Ports Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_port_id in after_del_port_id_list:
                 print "Port:%s does not delete,Please check!" % (after_del_port_id)
                 print "\n"
+                loginfo = "Port:%s does not delete..." % (after_def_port_id)
+                logging.error(loginfo)
                 return False
 
     def image(self,project_id):
@@ -493,13 +552,17 @@ class check:
             after_del_image_id_list.append(after_del_image_id)
 
         if len(after_del_image_id_list) == 0:
-            print "Image Clean up"
+            print "All Images Clean up..."
             print "\n"
+            loginfo = "All Images Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_image_id in after_del_image_id_list:
                 print "Image:%s does not delete,Please check!" % (after_del_image_id)
                 print "\n"
+                loginfo = "Image:%s does not delete..." % (after_del_image_id)
+                logging.error(loginfo)
                 return False
 
     def stack(self,project_id):
@@ -512,13 +575,17 @@ class check:
             after_del_stack_id_list.append(after_del_stack_id)
 
         if len(after_del_stack_id_list) == 0:
-            print "Stack Clean up"
+            print "All Stacks Clean up..."
             print "\n"
+            loginfo = "All Stacks Clean up..."
+            logging.info(loginfo)
             return True
         else:
             for after_del_stack_id in after_del_stack_id_list:
                 print "Stack:%s does not delete,Please check!" % (after_del_stack_id)
                 print "\n"
+                loginfo = "Stack:%s does not delete..." % (after_del_stack_id)
+                logging.error(loginfo)
                 return False 
 
 
@@ -527,9 +594,6 @@ def main():
     P = project()
     P.get()
     
-    #os.system("openstack project list")
-    #print "\n"
-    #project_id = raw_input("Please enter project id that will be delete:")
     project_id = sys.argv[1]
     project_id = str(project_id)
 
