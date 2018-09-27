@@ -6,6 +6,10 @@ import ssl
 import re
 import HTMLParser
 import xlwt
+import os
+import sys
+import win32com.client
+from win32com.client import Dispatch, Constants
 
 class Spider:
     
@@ -42,11 +46,13 @@ class Spider:
         ticketSummaryReg =  r'<td class="summary"><p>\n*.*?>(.*?)</a>'
         ticketReporterReg = r'id="reporter.*?>(.*?)</a>'
         ticketResolutionReg = r'<em>(.*?)</em>'
-        
+        ticketAffectsReg = r'<td class="versions">(.*?)\s</td>'
         loginData = urllib.urlencode(loginData)
         
         opener.open(loginUrl,loginData)
-        content = opener.open('https://greenhopper.app.alcatel-lucent.com/issues/?filter=54652').read()
+        #content = opener.open('https://greenhopper.app.alcatel-lucent.com/issues/?filter=54652').read()
+        content = opener.open('https://greenhopper.app.alcatel-lucent.com/issues/?filter=60219').read()
+        #print content
         
         ticketNum = re.findall(ticketNumReg, content)
         ticketNumLink = re.findall(ticketNumLinkReg, content)
@@ -56,6 +62,7 @@ class Spider:
         ticketSummary =  re.findall(ticketSummaryReg, content)
         ticketReporter = re.findall(ticketReporterReg, content)
         ticketResolution =  re.findall(ticketResolutionReg, content)
+        ticketAffects =  re.findall(ticketAffectsReg, content)
         
         html_parser =  HTMLParser.HTMLParser()
         
@@ -63,7 +70,7 @@ class Spider:
             summary = html_parser.unescape(summary)
             ticketSummaryUnescape.append(summary)
         
-        data =  zip(ticketAssigneeName, ticketCreatetime, ticketNum, ticketNumLink, ticketStatus, ticketSummaryUnescape, ticketReporter, ticketResolution)
+        data =  zip(ticketAssigneeName, ticketCreatetime, ticketNum, ticketNumLink, ticketStatus, ticketSummaryUnescape, ticketReporter, ticketResolution, ticketAffects)
               
     
     def saveToExcel(self, filename):
@@ -76,7 +83,7 @@ class Spider:
         i = 1
         book =  xlwt.Workbook()
         sheet1 =  book.add_sheet("VlabTicket")
-        head =  ['Assignee', 'Created', 'TicketNum', 'Status', 'Summary', 'Reporter', 'Resolution']
+        head =  ['Assignee', 'Created', 'TicketNum', 'Status', 'Summary', 'Reporter', 'Resolution', 'Affects Version']
         
         Assignee_col = sheet1.col(0)
         Assignee_col.width = 256 * 30
@@ -91,7 +98,9 @@ class Spider:
         Reporter_col = sheet1.col(5)
         Reporter_col.width = 256 * 35
         Resolution_col = sheet1.col(6)
-        Resolution_col.width = 256 * 12        
+        Resolution_col.width = 256 * 12
+        Affects_col = sheet1.col(7)
+        Affects_col.width = 256 * 14        
         
         for h in range(len(head)):
             sheet1.write(0, h, head[h])
@@ -132,16 +141,38 @@ class Spider:
             sheet1.write(i, 6, resolution[7])
             i +=  1
         i = 1
+
+        for affects in data:
+            affects_info =  affects[8].strip()
+            if affects_info == "&nbsp;":
+                affects_info = " "
+            sheet1.write(i, 7, affects_info)
+            i +=  1
+        i = 1
         
         book.save(filename)
         print "%s save ok..." %  (filename)
             
+def sendmail(filename):
+    sub = 'outlook python mail test'
+    body = 'Hi All\n\rHere are the information about tickets ongoing.The scan will be run every working day and mail will be sent on morning. Thanks'
+    outlook = win32com.client.Dispatch('outlook.application')
+    receivers =  ['cn-lab@list.nokia.com']
+    mail = outlook.CreateItem(0)
+    mail.To = receivers[0]
+    mail.Subject = sub.decode('utf-8')
+    mail.Body = body.decode('utf-8')
+    filepath = sys.path[0] + "\\" + filename
+    mail.Attachments.Add(filepath)
+    mail.Send()
+    print "mail send ok..."
             
 def main():
     WebSpider =  Spider(url, loginUrl, **headers)
     WebSpider.getData(loginUrl, loginData)
     filename = "VlabTicket.xls"
     WebSpider.saveToExcel(filename)
+    sendmail(filename)
 
 if __name__ == '__main__':
     csrList = []
