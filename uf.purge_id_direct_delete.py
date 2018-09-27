@@ -227,7 +227,7 @@ class project:
         for vol_id in vol_id_list:
             os.system("cinder reset-state --state available --attach-status detached %s" % (vol_id))
             print "Reset status for VM:%s" % (vol_id)
-            loginfo = "%s reset successful..." % (vol_id)
+            loginfo = "Volume:%s reset successful..." % (vol_id)
             logging.info(loginfo)
             time.sleep(2)
         print "\n"
