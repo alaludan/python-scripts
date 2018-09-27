@@ -34,9 +34,10 @@ project_id = ""
 
 check_vm = check_vol = check_subnet = check_net = check_port = check_image = check_stack = check_secgroup = check_router = True 
 
+LOG_FILENAME = sys.argv[0]+".log"
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
-logging.basicConfig(filename='uf.purge.log',level=logging.DEBUG,format=LOG_FORMAT,datefmt=DATE_FORMAT)
+logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,format=LOG_FORMAT,datefmt=DATE_FORMAT)
 
 def usage():
     print """
