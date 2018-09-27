@@ -640,6 +640,8 @@ def main():
         P.show_secgroup(project_id)
         P.show_stack(project_id)
 
+        time.sleep(30)
+
         check_vol = C.vol(project_id)
         check_vm = C.vm(project_id)
         check_subnet = C.subnet(project_id)
