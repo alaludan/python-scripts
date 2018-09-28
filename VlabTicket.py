@@ -183,7 +183,7 @@ def main():
     WebSpider.getData(loginUrl, loginData)
     filename = "VlabTicket.xls"
     WebSpider.saveToExcel(filename)
-    #sendmail(filename)
+    sendmail(filename)
 
 if __name__ == '__main__':
     csrList = []
