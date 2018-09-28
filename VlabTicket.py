@@ -47,6 +47,7 @@ class Spider:
         ticketReporterReg = r'id="reporter.*?>(.*?)</a>'
         ticketResolutionReg = r'<em>(.*?)</em>'
         ticketAffectsReg = r'<td class="versions">(.*?)\s</td>'
+        ticketTypeReg =  r'avatarType=issuetype" height="16" width="16" border="0" align="absmiddle" alt="(.*?)"'
         loginData = urllib.urlencode(loginData)
         
         opener.open(loginUrl,loginData)
@@ -63,6 +64,7 @@ class Spider:
         ticketReporter = re.findall(ticketReporterReg, content)
         ticketResolution =  re.findall(ticketResolutionReg, content)
         ticketAffects =  re.findall(ticketAffectsReg, content)
+        ticketType =  re.findall(ticketTypeReg, content)
         
         html_parser =  HTMLParser.HTMLParser()
         
@@ -70,7 +72,8 @@ class Spider:
             summary = html_parser.unescape(summary)
             ticketSummaryUnescape.append(summary)
         
-        data =  zip(ticketAssigneeName, ticketCreatetime, ticketNum, ticketNumLink, ticketStatus, ticketSummaryUnescape, ticketReporter, ticketResolution, ticketAffects)
+        #data =  zip(ticketAssigneeName, ticketCreatetime, ticketNum, ticketNumLink, ticketStatus, ticketSummaryUnescape, ticketReporter, ticketResolution, ticketAffects, ticketType)
+        data =  zip(ticketAssigneeName, ticketCreatetime,ticketType, ticketNum, ticketNumLink, ticketAffects, ticketStatus, ticketSummaryUnescape, ticketReporter, ticketResolution)
               
     
     def saveToExcel(self, filename):
@@ -83,24 +86,27 @@ class Spider:
         i = 1
         book =  xlwt.Workbook()
         sheet1 =  book.add_sheet("VlabTicket")
-        head =  ['Assignee', 'Created', 'TicketNum', 'Status', 'Summary', 'Reporter', 'Resolution', 'Affects Version']
+        #head =  ['Assignee', 'Created', 'TicketNum', 'Status', 'Summary', 'Reporter', 'Resolution', 'Affects Version']
+        head =  ['Assignee', 'Created', 'TicketType','TicketNum', 'Affects Version', 'Status', 'Summary', 'Reporter', 'Resolution']
         
         Assignee_col = sheet1.col(0)
         Assignee_col.width = 256 * 30
         Creted_col = sheet1.col(1)
         Creted_col.width = 256 * 10
-        TicketNum_col = sheet1.col(2)
+        TiecktType_col = sheet1.col(2)
+        TiecktType_col.width = 256 * 20       
+        TicketNum_col = sheet1.col(3)
         TicketNum_col.width = 256 * 20
-        Status_col = sheet1.col(3)
+        Affects_col = sheet1.col(4)
+        Affects_col.width = 256 * 14          
+        Status_col = sheet1.col(5)
         Status_col.width = 256 * 10
-        Summary_col =  sheet1.col(4)
+        Summary_col =  sheet1.col(6)
         Summary_col.width = 256 * 80
-        Reporter_col = sheet1.col(5)
+        Reporter_col = sheet1.col(7)
         Reporter_col.width = 256 * 35
-        Resolution_col = sheet1.col(6)
+        Resolution_col = sheet1.col(8)
         Resolution_col.width = 256 * 12
-        Affects_col = sheet1.col(7)
-        Affects_col.width = 256 * 14        
         
         for h in range(len(head)):
             sheet1.write(0, h, head[h])
@@ -116,37 +122,42 @@ class Spider:
             i += 1
         i = 1
         
+        for tickettype in data:
+            sheet1.write(i, 2, tickettype[2])
+            i += 1
+        i = 1
+        
         for ticketnum in data:
-            link =  url + ticketnum[3]
-            sheet1.write(i, 2, xlwt.Formula("HYPERLINK"+'("'+link+'";"'+ticketnum[2]+'")'), style)
+            link =  url + ticketnum[4]
+            sheet1.write(i, 3, xlwt.Formula("HYPERLINK"+'("'+link+'";"'+ticketnum[3]+'")'), style)
+            i +=  1
+        i = 1
+        
+        for affects in data:
+            affects_info =  affects[5].strip()
+            if affects_info == "&nbsp;":
+                affects_info = " "
+            sheet1.write(i, 4, affects_info)
             i +=  1
         i = 1
         
         for status in data:
-            sheet1.write(i, 3, status[4])
+            sheet1.write(i, 5, status[6])
             i +=  1
         i = 1
         
         for summary in data:
-            sheet1.write(i, 4, summary[5])
+            sheet1.write(i, 6, summary[7])
             i +=  1
         i = 1
         
         for reporter in data:
-            sheet1.write(i, 5, reporter[6])
+            sheet1.write(i, 7, reporter[8])
             i +=  1
         i = 1
         
         for resolution in data:
-            sheet1.write(i, 6, resolution[7])
-            i +=  1
-        i = 1
-
-        for affects in data:
-            affects_info =  affects[8].strip()
-            if affects_info == "&nbsp;":
-                affects_info = " "
-            sheet1.write(i, 7, affects_info)
+            sheet1.write(i, 8, resolution[9])
             i +=  1
         i = 1
         
@@ -172,7 +183,7 @@ def main():
     WebSpider.getData(loginUrl, loginData)
     filename = "VlabTicket.xls"
     WebSpider.saveToExcel(filename)
-    sendmail(filename)
+    #sendmail(filename)
 
 if __name__ == '__main__':
     csrList = []
