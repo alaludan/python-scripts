@@ -18,6 +18,7 @@ import logging
 
 project_dic = {}
 vol_id_list = []
+vol_snap_id_list =[]
 vm_id_list = []
 image_id_list = []
 net_id_list = []
@@ -32,7 +33,7 @@ router_id_list = []
 project_name = ""
 project_id = ""
 
-check_vm = check_vol = check_subnet = check_net = check_port = check_image = check_stack = check_secgroup = check_router = True 
+check_vm = check_vol = check_vol_snap = check_subnet = check_net = check_port = check_image = check_stack = check_secgroup = check_router = True 
 
 LOG_FILENAME = sys.argv[0]+".log"
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -103,12 +104,24 @@ class project:
         print "=>Show All Volumes Of %s..." % (project_id)
         os.system("openstack volume list --project %s" % (project_id))
         print "\n"
-        vol_info =  os.popen("openstack volume list --project %s -f value -c ID" % (project_id))
+        vol_info = os.popen("openstack volume list --project %s -f value -c ID" % (project_id))
         vol_ids = vol_info.readlines()
         for vol_id in vol_ids:
             vol_id = str(vol_id).strip()
             vol_id_list.append(vol_id)
         return vol_id_list
+
+    def show_vol_snap(self,project_id):
+        print "\n def show_vol_snap \n"
+        print "=>Show All Snapshot Of %s..." % (project_id)
+        os.system("openstack volume snapshot list --project %s" % (project_id))
+        print "\n"
+        vol_snap_info = os.popen("openstack volume snapshot list --project %s -f value -c ID" % (project_id))
+        vol_snap_ids = vol_snap_info.readlines()
+        for vol_snap_id in vol_snap_ids:
+            vol_snap_id = str(vol_snap_id).strip()
+            vol_snap_id_list.append(vol_snap_id)
+        return vol_snap_id_list
         
     def show_vm(self,project_id):
         print "\n def show_vm \n"
@@ -148,20 +161,13 @@ class project:
         return subnet_id_list
 
     def show_all_port(self,project_id):
-        print "\n def show_all_port \n" #ZZZ
-        #all_port_info = os.popen("openstack port list -f value -c id -c security_groups -c tenant_id -c project_id|grep %s|awk -F' ' '{print $1}'" % (project_id))
-        all_port_info = os.popen("openstack port list -f value -c id --project %s" % (project_id))
+        print "\n def show_all_port \n" 
+        os.system("openstack port list --project %s" %(project_id))
+        all_port_info = os.popen("openstack port list --project %s -f value -c ID" % (project_id))
         all_port_ids = all_port_info.readlines()
         for all_port_id in all_port_ids:
             all_port_id = str(all_port_id).strip()
             all_port_id_list.append(all_port_id)
-           
-        for subnet_id in subnet_id_list:
-            subnet_port_info = os.popen("openstack port list --long|grep %s|awk -F'|' '{print $2}'" % (subnet_id))
-            subnet_port_ids = subnet_port_info.readlines()
-            for subnet_port_id in subnet_port_ids:
-                subnet_port_id = str(subnet_port_id).strip()
-                all_port_id_list.append(subnet_port_id) 
         return all_port_id_list
 
     def show_net(self,project_id):
@@ -199,7 +205,19 @@ class project:
             router_id = str(router_id).strip()
             router_id_list.append(router_id)
         return router_id_list
-            
+
+    def show_router_port(self):
+        print "\n def show_router_port \n"
+        for router_id in router_id_list:
+            print "=>Show All Ports Of Routers %s" % (router_id)
+            os.system("openstack port list --router %s" % (router_id))
+            router_port_info = os.popen("openstack port list --router %s -f value -c ID" % (router_id))
+            router_port_ids = router_port_info.readlines()
+            for router_port_id in router_port_ids:
+                router_port_id = str(router_port_id).strip()
+                router_port_id_list.append(router_port_id)
+            return router_port_id_list
+ 
     def show_secgroup(self,project_id):
         print "\n def show_secgroup \n"
         print "=>Show All Secgroups Of %s..." % (project_id)
@@ -251,6 +269,20 @@ class project:
             time.sleep(10)
         print "\n"
         print "\n"
+
+    def del_vol_snap(self,project_id):
+        print "\n def del_vol_snap"
+        print "=>Delete All Snapshots of %s..." % (project_id)
+        print "\n"
+        for vol_snap_id in vol_snap_id_list:
+            print vol_snap_id
+            os.system("openstack volume snapshot delete %s" % (vol_snap_id))
+            print "Delete Volume Snapshot:%s" % (vol_snap_id)
+            loginfo = "Delete Volume Snapshot %s successful..." % (vol_snap_id)
+            logging.info(loginfo)
+            time.sleep(10)
+        print "\n"
+        print "\n"
         
     def del_vol(self,project_id):
         print "\n def del_vol \n"
@@ -283,8 +315,8 @@ class project:
         print "=>Delete All Images Of %s..." % (project_id)
         print "\n"
         for image in image_id_list:
-            os.system("glance image-update --is-protected False %s" % (image))
-            os.system("glance image-delete %s" % (image))
+            os.system("openstack image set %s --unprotected" % (image))
+            os.system("openstack image delete %s" % (image))
             print "Delete image:%s" % (image)
             loginfo = "Delete image %s successful..." % (image)
             logging.info(loginfo)
@@ -292,16 +324,17 @@ class project:
         print "\n"
         print "\n"
 
+
     def del_router(self,project_id):
         print "\n def del_router \n"
-        print "=>Delete All routers of %s" % (project_id)
+        print "=>Delete All Routers Of %s" % (project_id)
         for router_id in router_id_list:
-            router_port_info = os.popen("neutron router-port-list %s -f value -c id" % (router_id)) 
+            router_port_info = os.popen("openstack port list --router %s -f value -c ID" % (router_id)) 
             router_port_ids = router_port_info.readlines()
             for router_port_id in router_port_ids:
-                os.system("neutron router-interface-delete %s port=%s" % (router_id,router_port_id))
+                os.system("openstack router remove port %s %s" % (router_id,router_port_id))
                 time.sleep(2)
-            os.system("neutron router-delete %s" % (router_id))
+            os.system("openstack router delete %s" % (router_id))
             print "Delete router:%s" % (router_id)
             loginfo = "Delete router %s successful..." % (router_id)
             logging.info(loginfo)
@@ -310,7 +343,7 @@ class project:
         print "\n def remove_dhcp_agent \n"
         for dhcp_agent_id in dhcp_agent_id_list:
             for net_id in net_id_list:
-                os.system("neutron dhcp-agent-network-remove %s %s" % (dhcp_agent_id,net_id))
+                os.system("openstack network agent remove network %s %s" % (dhcp_agent_id,net_id))
                 time.sleep(2)
 
     def del_port(self,project_id):
@@ -410,6 +443,29 @@ class check:
                 loginfo = "Volume:%s does not delete..." % (after_del_vol_id)
                 logging.error(loginfo)
                 return False
+
+    def vol_snap(self,project_id):
+        print "\n def vol_snap \n"
+
+        after_del_vol_snap_id_list = []
+        after_del_vol_snap_info =  os.popen("openstack volume snapshot list --project %s -f value -c ID" % (project_id))
+        after_del_vol_snap_ids = after_del_vol_snap_info.readlines()
+        for after_del_vol_snap_id in after_del_vol_snap_ids:
+            after_del_vol_snap_id = str(after_del_vol_snap_id).strip()
+            after_del_vol_snap_id_list.append(after_del_vol_snap_id)
+
+        if len(after_del_vol_snap_id_list) == 0:
+            print "All Volume Snapshots Clean up..."
+            print "\n"
+            loginfo = "All Volume Snapshots Clean up..."
+            logging.info(loginfo)
+            return True
+        else:
+            for after_del_vol_snap_id in after_del_vol_snap_id_list:
+                print "Volume Snapshot:%s does not delete,Please check!" % (after_del_vol_snap_id)
+                print "\n"
+                loginfo = "Volume Snapshot:%s does not delete..." % (after_del_vol_snap_id)
+                logging.error(loginfo)
 
     def vm(self,project_id):
         print "\n def vm \n"
@@ -534,12 +590,12 @@ class check:
         print "\n def port \n"
 
         after_del_port_id_list = []
-        for subnet_id in subnet_id_list:
-            after_del_port_info = os.popen("openstack port list -f value -c id -c security_groups -c tenant_id -c project_id|grep %s|awk -F' ' '{print $1}'" % (subnet_id))
-            after_del_port_ids = after_del_port_info.readlines()
-            for after_del_port_id in after_del_port_ids:
-                after_del_port_id = str(after_del_port_id).split(" ")[0]
-                after_del_port_id_list.append(after_def_port_id)
+
+        after_del_port_info = os.popen("openstack port list --project %s -f value -c ID" % (project_id))
+        after_del_port_ids = after_del_port_info.readlines()
+        for after_del_port_id in after_del_port_ids:
+            after_del_port_id = str(after_del_port_id).strip()
+            after_del_port_id_list.append(after_del_port_id)
 
         if len(after_del_port_id_list) == 0:
             print "All Ports Clean up..."
@@ -551,7 +607,7 @@ class check:
             for after_del_port_id in after_del_port_id_list:
                 print "Port:%s does not delete,Please check!" % (after_del_port_id)
                 print "\n"
-                loginfo = "Port:%s does not delete..." % (after_def_port_id)
+                loginfo = "Port:%s does not delete..." % (after_del_port_id)
                 logging.error(loginfo)
                 return False
 
@@ -616,6 +672,7 @@ def main():
         P.disable(project_id)   
     
         P.show_vol(project_id)
+        P.show_vol_snap(project_id)
         P.show_vm(project_id)
         P.show_image(project_id)
         P.show_subnet(project_id)
@@ -627,6 +684,8 @@ def main():
         P.show_stack(project_id)
         P.shutdown_vm(project_id)
         P.reset_vol_status(project_id)
+       
+        P.del_vol_snap(project_id)
         P.del_vol(project_id)
         P.del_vm(project_id)
         P.del_image(project_id)
@@ -637,7 +696,7 @@ def main():
         P.del_net(project_id)
         P.del_stack(project_id)
         P.del_secgroup(project_id)
-
+        
         C = check()
         print "\n"
         print "\n"
@@ -645,6 +704,7 @@ def main():
         print "\n"
 
         P.show_vol(project_id)
+        P.show_vol_snap(project_id)
         P.show_vm(project_id)
         P.show_image(project_id)
         P.show_router(project_id)
@@ -657,6 +717,7 @@ def main():
 	time.sleep(30)
 
         check_vol = C.vol(project_id)
+        check_vol_snap = C.vol_snap(project_id)
         check_vm = C.vm(project_id)
         check_subnet = C.subnet(project_id)
         check_net = C.net(project_id)
@@ -666,7 +727,7 @@ def main():
         check_secgroup = C.secgroup(project_id)
         check_router = C.router(project_id) 
   
-        if (check_vm and check_vol and check_subnet and check_net and check_port and check_image and check_stack and check_secgroup and check_router):
+        if (check_vm and check_vol and check_vol_snap and check_subnet and check_net and check_port and check_image and check_stack and check_secgroup and check_router):
             P.show_user(project_id)
             P.del_user(project_id)
             print "\n"
