@@ -18,13 +18,13 @@ import logging
 
 project_dic = {}
 vol_id_list = []
-vol_snap_id_list =[]
+vol_snap_id_list = []
 vm_id_list = []
 image_id_list = []
 net_id_list = []
 subnet_id_list = []
 port_id_list = []
-all_port_id_list = []
+all_port_id_list = [] 
 user_id_list = []
 stack_id_list = []
 secgroup_id_list = []
@@ -160,16 +160,6 @@ class project:
             subnet_id_list.append(subnet_id)
         return subnet_id_list
 
-    def show_all_port(self,project_id):
-        print "\n def show_all_port \n" 
-        os.system("openstack port list --project %s" %(project_id))
-        all_port_info = os.popen("openstack port list --project %s -f value -c ID" % (project_id))
-        all_port_ids = all_port_info.readlines()
-        for all_port_id in all_port_ids:
-            all_port_id = str(all_port_id).strip()
-            all_port_id_list.append(all_port_id)
-        return all_port_id_list
-
     def show_net(self,project_id):
         print "\n def show_net \n"
         print "=>Show All Networks Of %s..." % (project_id)
@@ -181,6 +171,24 @@ class project:
             net_id = str(net_id).strip()
             net_id_list.append(net_id)
         return net_id_list
+
+    def show_all_port(self,project_id):
+        print "\n def show_all_port \n" 
+        os.system("openstack port list --project %s" %(project_id))
+        all_port_info = os.popen("openstack port list --project %s -f value -c ID" % (project_id))
+        all_port_ids = all_port_info.readlines()
+        for all_port_id in all_port_ids:
+            all_port_id = str(all_port_id).strip()
+            all_port_id_list.append(all_port_id)
+
+        for net_id in net_id_list:
+            all_net_port_info =os.popen("openstack port list --network %s -f value -c ID" % (net_id))
+            all_net_port_ids = all_net_port_info.readlines()
+            for all_net_port_id in all_net_port_ids:
+                all_net_port_id = str(all_net_port_id).strip()
+                all_port_id_list.append(all_net_port_id)
+
+        return all_port_id_list
 
     def show_dhcp_agent(self,project_id):
         print "\n def show_dhcp_agent \n"
@@ -589,13 +597,20 @@ class check:
     def port(self,project_id):
         print "\n def port \n"
 
-        after_del_port_id_list = []
+        after_del_port_id_list = after_del_net_port_id_list = []
 
         after_del_port_info = os.popen("openstack port list --project %s -f value -c ID" % (project_id))
         after_del_port_ids = after_del_port_info.readlines()
         for after_del_port_id in after_del_port_ids:
             after_del_port_id = str(after_del_port_id).strip()
             after_del_port_id_list.append(after_del_port_id)
+
+        for net_id in net_id_list:
+            all_del_net_port_info =os.popen("openstack port list --network %s -f value -c ID" % (net_id))
+            all_del_net_port_ids = all_del_net_port_info.readlines()
+            for all_del_net_port_id in all_del_net_port_ids:
+                all_del_net_port_id = str(all_del_net_port_id).strip()
+                all_del_port_id_list.append(all_del_net_port_id)
 
         if len(after_del_port_id_list) == 0:
             print "All Ports Clean up..."
@@ -676,8 +691,8 @@ def main():
         P.show_vm(project_id)
         P.show_image(project_id)
         P.show_subnet(project_id)
-        P.show_all_port(project_id)
         P.show_net(project_id)
+        P.show_all_port(project_id)
         P.show_dhcp_agent(project_id)
         P.show_router(project_id)
         P.show_secgroup(project_id)
@@ -708,8 +723,8 @@ def main():
         P.show_vm(project_id)
         P.show_image(project_id)
         P.show_router(project_id)
-        P.show_subnet(project_id)
         P.show_all_port(project_id)
+        P.show_subnet(project_id)
         P.show_net(project_id)
         P.show_secgroup(project_id)
         P.show_stack(project_id)
@@ -734,7 +749,7 @@ def main():
             print "All resources have been cleaned up..."
             print "\n"
             os.system("openstack project delete %s" % (project_id))
-            print "Project successfully deleted..."
+            print "Project %s deleted successfully!" % (project_id)
             print "\n"
         else:
             print "\n"
